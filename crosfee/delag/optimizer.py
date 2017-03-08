@@ -119,6 +119,16 @@ class KernelOptimizer(object):
         return common_lags(self.original.index, self.lagged.index)
 
     @property
+    def original_lags(self):
+        """ Return the original series' lags
+        Returns:
+            lags = 1d numpy.array: the original series' lags
+        """
+        lags = self.original.index.values.astype('float64') * 1e-9
+        lags = lags - lags.min()
+        return lags
+
+    @property
     def convolution_matrix(self):
         """ Create a convolution matrix based on the current LagKernel and the
             timestamps of lagged and original timeseries.
@@ -126,9 +136,41 @@ class KernelOptimizer(object):
             mat = 2d numpy.array Matrix
         """
         return convolve.convolution_matrix_continuous_kernel(
-            lags = self.common_lags,
+            lags = self.original_lags,
             kernel = self.kernel
             )
+    @property
+    def original_convolved(self):
+        """ Convolve the original series with the current kernel
+        Returns:
+            series = pandas.Series with same index as original series
+        """
+        res = pd.Series(
+            data = np.dot( self.convolution_matrix, self.original ),
+            index = self.original.index,
+            )
+        return res
+
+    @property
+    def original_convolved_at_lagged(self):
+        """ Convolve the original series with the current kernel and interpolate
+            to the lagged times.
+        Returns:
+            series = pandas.Series with same index as lagged series
+        """
+        # interpolate original convolved series
+        interpolator = scipy.interpolate.interp1d( 
+            x = self.original.index.values.astype('float64') * 1e-9,
+            y = self.original_convolved,
+            kind = "linear",
+            )
+        # interpolate
+        res = pd.Series( 
+            data = interpolator( 
+                self.lagged.index.values.astype('float64') * 1e-9 ),
+            index = self.lagged.index,
+            )
+        return res
 
     @property
     def residual(self):
@@ -137,26 +179,9 @@ class KernelOptimizer(object):
         Returns:
             residual = np.array of size 1
         """
-        # convolve original series with current kernel
-        original_convolved = convolve.convolve_series_with_continuous_kernel( 
-            series = self.original, kernel = self.kernel)
-        self.logger.debug("original convolved: \n{}".format(
-            original_convolved))
-
-        # interpolate original convolved series
-        interpolator = scipy.interpolate.interp1d( 
-            x = self.original.index.values.astype('float64') * 1e-9,
-            y = original_convolved,
-            kind = "linear"
-            )
-        original_convolved_interpolated = interpolator(
-            self.lagged.index.values.astype('float64') * 1e-9)
-        self.logger.debug("original convolved and interpolated: \n{}".format(
-            original_convolved_interpolated))
-
         # calculate residual
         rmse = np.sqrt( np.mean( 
-            (self.lagged.values - original_convolved_interpolated) ** 2 ) )
+            (self.lagged.values - self.original_convolved_at_lagged) ** 2 ) )
 
         return rmse
         

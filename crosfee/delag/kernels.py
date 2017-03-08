@@ -314,3 +314,41 @@ class LagKernelWeibull(LagKernel):
             * np.exp( - ( lag / scale ) ** shape ) 
         return res
 
+class LagKernelPolynomGeneral(LagKernel):
+    """ Polynomial lag kernel
+    """
+    def __init__(self,parameters = [1,-1], max_lag = 0):
+        """ Class constructor
+        Args:
+            parameters Optional[list of float]: the parameters [scale, shape].
+                Defaults to [1,1].
+            max_lag Optional[Float]: maximum lag of the kernel. Defaults to
+                zero which means infinite maximum lag.
+        """
+        super().__init__(
+            num_parameters = len(parameters), 
+            parameters = parameters, 
+            max_lag = max_lag)
+
+    @property
+    def default_parameters(self):
+        """ Default parameters. Subclasses should override this.
+        """
+        return [1,1]
+
+    @property
+    def parameter_bounds(self):
+        """ Only positive parameters are allowed.
+        Returns:
+            list of (min,max)-tuples for each parameter
+        """
+        return [(-np.Inf,np.Inf)] * self.num_parameters
+
+    def value(self, lag):
+        """ Polynom
+        """
+        # calculate
+        res = 0
+        for i in range(len(self.parameters)):
+            res = res + self.parameters[i] * lag ** (i)
+        return res
