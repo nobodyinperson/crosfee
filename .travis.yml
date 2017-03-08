@@ -1,9 +1,7 @@
 language: python
-before_install:
-    - sudo apt-get install -qq python3-numpy python3-scipy
 python:
     - "3.5"
     - "3.6"
     - "nightly"
-install: "pip3 install --prefix=~/.local ."
+install: "pip3 install --only-binary=numpy,scipy --prefix=~/.local ."
 script: ./setup.py test
