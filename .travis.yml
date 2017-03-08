@@ -3,5 +3,5 @@ python:
     - "3.5"
     - "3.6"
     - "nightly"
-install: "pip3 install --user ."
+install: "pip3 install --prefix=~/.local ."
 script: ./setup.py test
