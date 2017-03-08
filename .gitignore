@@ -1,0 +1,14 @@
+# python stuff
+*egg-info
+__pycache__
+build/
+
+# temporary files and folders
+*TMP
+TMP*
+*tmp
+tmp*
+
+# backup files
+*.bak
+*.BAK
