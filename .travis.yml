@@ -1,7 +1,9 @@
 language: python
+before_install:
+    - "pip3 install --only-binary=scipy,pandas,numpy numpy scipy pandas"
 python:
     - "3.5"
     - "3.6"
     - "nightly"
-install: "pip3 install --only-binary=numpy,scipy --prefix=~/.local ."
+install: "pip3 install --prefix=~/.local ."
 script: ./setup.py test
